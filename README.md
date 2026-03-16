@@ -1,132 +1,188 @@
-# Fantasy Baseball Draft Prep Tool
+# Fantasy Baseball Management System
 
-A Python-based auction valuation engine for 12-team H2H Categories leagues on ESPN.
+A Python toolkit for drafting and managing a fantasy baseball team in a 12-team H2H Categories league on ESPN. Built to reduce the daily time commitment of running a competitive team.
 
-## Your League Settings
+## League Settings
 
-- **Format:** Head-to-Head Categories, Auction ($260)
-- **Teams:** 12
-- **Hitting cats:** R, HR, RBI, SB, OBP
-- **Pitching cats:** K, W, SV, ERA, WHIP
-- **Roster:** C, 1B, 2B, 3B, SS, IF, 3×OF, UTIL, 5×SP, 3×RP, 3×BE, 3×IL
+| Setting | Value |
+|---|---|
+| Platform | ESPN |
+| Format | Head-to-Head Categories |
+| Draft | Auction ($260) |
+| Teams | 12 |
+| Hitting | R, HR, RBI, SB, OBP |
+| Pitching | K, W, SV, ERA, WHIP |
+| Roster | C, 1B, 2B, 3B, SS, IF, 3×OF, UTIL, 5×SP, 3×RP, 3×BE, 3×IL |
 
-## Quick Start
+## Getting Started
 
-### 1. Get Projection Data
-Download free Steamer projections from FanGraphs:
+### 1. Download Projections
 
-**Hitters:**
-1. Go to https://www.fangraphs.com/projections
-2. Select **Steamer** (or ATC for blended projections)
-3. Set to **Hitters**, current season
-4. Click **Export Data** (CSV download)
-5. Save as `inputs/hitters.csv`
+Go to [FanGraphs Projections](https://www.fangraphs.com/projections), select Steamer or ATC, and export CSVs for both hitters and pitchers. Save them as `inputs/hitters.csv` and `inputs/pitchers.csv`.
 
-**Pitchers:**
-1. Same page, switch to **Pitchers**
-2. Export and save as `inputs/pitchers.csv`
-
-### 2. Run the Tool
+### 2. Generate Your Draft Cheat Sheet
 
 ```bash
-cd fantasy-baseball
-python main.py --hitters inputs/hitters.csv --pitchers inputs/pitchers.csv
+python draft.py --hitters inputs/hitters.csv --pitchers inputs/pitchers.csv
 ```
 
-### 3. Review Outputs
+This outputs auction dollar values, tiered rankings, and positional breakdowns into the `output/` directory.
 
-- `output/cheatsheet.csv` — Full ranked list with dollar values and tiers
-- `output/hitters_valued.csv` — Detailed hitter breakdown
-- `output/pitchers_valued.csv` — Detailed pitcher breakdown
-- `output/draft_summary.txt` — Quick reference for draft day
+### 3. Manage Your Team During the Season
 
-## How It Works
+```bash
+python manage.py --roster-file inputs/my_roster.txt \
+    --hitters inputs/hitters.csv --pitchers inputs/pitchers.csv \
+    --injuries inputs/injuries.json
+```
 
-### Valuation Method: Z-Score Auction Dollars
+---
 
-1. **Filter** players by minimum playing time (200 PA hitters, 30 IP pitchers)
-2. **Z-score** each category relative to the draftable player pool
-   - Counting stats (R, HR, RBI, SB, K, W, SV): standard z-score
-   - Rate stats (OBP, ERA, WHIP): marginal value approach weighted by playing time
-     so a .400 OBP over 600 PA is worth more than .400 OBP over 200 PA
-3. **Sum** z-scores equally across 5 categories for a total value
-4. **Convert** to auction dollars:
-   - Split budget 67% hitters / 33% pitchers
-   - Reserve $1 per roster slot (minimum bid)
-   - Distribute remaining $ proportional to z-score share
-5. **Tier** players using quantile breaks for quick draft-day reference
+## Module 1: Draft Prep
 
-### Key Design Decisions
+**Entry point:** `draft.py`
 
-- **OBP over AVG:** Your league uses OBP, so high-walk players get a value boost
-  that most generic rankings miss.
-- **Marginal rate stats:** A reliever with a 2.50 ERA over 60 IP is less valuable
-  to your ERA category than an SP with 3.20 ERA over 180 IP. The marginal approach
-  captures this correctly.
-- **IF slot flexibility:** The IF slot reduces scarcity at individual infield positions.
-  The tool accounts for this in the pool sizing.
+Converts raw FanGraphs projections into auction dollar values calibrated to your league.
 
-## Customization
+### How the Valuation Works
+
+Player values are computed using z-scores across all 10 categories. Counting stats (R, HR, RBI, SB, K, W, SV) use standard z-scores. Rate stats (OBP, ERA, WHIP) use a marginal value approach weighted by playing time — a .400 OBP over 600 PA contributes more to your team's OBP than .400 over 200 PA, and the model accounts for that.
+
+Z-scores are converted to auction dollars by splitting the league budget 67/33 between hitters and pitchers, reserving $1 per roster slot as a minimum bid, and distributing the rest proportionally. Players are assigned to tiers using quantile breaks.
+
+Position eligibility is mapped via MLBAMID lookup (333/333 draftable hitters covered). The IF slot reduces infield scarcity, and the model accounts for this in pool sizing.
+
+### Outputs
+
+| File | Description |
+|---|---|
+| `output/cheatsheet.csv` | Full ranked list with dollar values, tiers, z-scores, and category strengths |
+| `output/hitters_valued.csv` | Detailed hitter valuations |
+| `output/pitchers_valued.csv` | Detailed pitcher valuations |
+| `output/draft_summary.txt` | Quick reference with top players by position and budget strategy |
+| `output/auction_board.txt` | Searchable draft board grouped by dollar value |
 
 ### CLI Options
 
 ```bash
-python main.py --hitters data/h.csv --pitchers data/p.csv \
-    --min-pa 150          # Lower PA threshold to include more hitters
-    --min-ip 20           # Lower IP threshold to include more pitchers
-    --hitter-budget-pct 0.70  # Spend 70% on hitters instead of 67%
+python draft.py --hitters inputs/hitters.csv --pitchers inputs/pitchers.csv \
+    --min-pa 150              # Lower PA threshold (default 200)
+    --min-ip 20               # Lower IP threshold (default 30)
+    --hitter-budget-pct 0.70  # Adjust budget split (default 0.67)
+    --output output_dir       # Custom output directory
 ```
 
-### Config Tweaks
-Edit `config.py` to adjust:
-- Budget split between hitters/pitchers
-- Number of players drafted at each position
-- Minimum playing time thresholds
-- Column mappings if using non-FanGraphs data sources
+### Key Files
+
+| File | Purpose |
+|---|---|
+| `config.py` | League settings, roster slots, categories, column mappings |
+| `valuations.py` | Z-score engine, dollar conversion, tier assignment |
+| `positions.py` | MLBAMID-to-position lookup (ESPN eligibility) |
+| `draft.py` | CLI entry point for draft prep |
+| `generate_sample_data.py` | Creates fake projection data for testing |
 
 ---
 
 ## Module 2: Lineup Manager
 
-Daily lineup optimization, matchup tracking, and pitching planning.
+**Entry point:** `manage.py`
 
-### Usage
+Daily lineup optimization, weekly matchup tracking, pitching planning, and injury awareness.
 
-**Basic (start of week, no matchup data):**
+### Daily Workflow
+
+**Start of week (no matchup data yet):**
 ```bash
-python manage.py --roster-file data/my_roster.txt \
-    --hitters data/hitters.csv --pitchers data/pitchers.csv
+python manage.py --roster-file inputs/my_roster.txt \
+    --hitters inputs/hitters.csv --pitchers inputs/pitchers.csv \
+    --injuries inputs/injuries.json
 ```
 
-**Mid-week (with matchup data):**
+**Mid-week (with current matchup stats):**
 ```bash
-python manage.py --roster-file data/my_roster.txt \
-    --hitters data/hitters.csv --pitchers data/pitchers.csv \
+python manage.py --roster-file inputs/my_roster.txt \
+    --hitters inputs/hitters.csv --pitchers inputs/pitchers.csv \
+    --injuries inputs/injuries.json \
     --my-stats "R=25,HR=8,RBI=22,SB=4,OBP=.285,K=48,W=3,SV=2,ERA=3.15,WHIP=1.12" \
     --opp-stats "R=30,HR=10,RBI=28,SB=2,OBP=.270,K=42,W=2,SV=4,ERA=3.80,WHIP=1.25"
 ```
 
 ### Roster Input
-Create a text file with one player name per line:
+
+Create `inputs/my_roster.txt` with one player per line. The parser handles position prefixes, team abbreviations, numbered lists, and accented characters.
+
 ```
 Cal Raleigh
 Bobby Witt Jr.
+Jose Altuve
 Tarik Skubal
 Mason Miller
-...
 ```
 
-### What It Does
+### Features
 
-1. **Roster Display** — Shows your full roster with positions, dollar values, and projected stats
-2. **Start/Sit Recommendations** — Ranks all your players by daily composite score and assigns them to optimal roster slots respecting position eligibility
-3. **Matchup Tracker** — Enter your weekly stats and your opponent's to see which categories you're winning/losing, with strategic recommendations
-4. **Adaptive Weights** — When matchup data is provided, the lineup optimizer shifts weights to chase categories you're closely losing and deprioritize ones you're safely winning
-5. **Pitching Planner** — Rates your SPs by K/start, W/start, and ERA risk. Identifies top streaming candidates from the free agent pool.
+**Start/Sit Optimizer** — Scores every player using per-game rates, then assigns them to roster slots with a constrained-first algorithm (fills C before UTIL, SS before IF) so positional eligibility is always respected.
 
-### Module Files
-- `manage.py` — Main CLI entry point
-- `roster.py` — Roster loading, name matching, display
-- `lineup.py` — Lineup optimizer with position-aware slot filling
-- `matchup.py` — Weekly H2H category tracker and strategy engine
-- `pitching.py` — SP analysis, risk classification, streaming candidates
+**Matchup Tracker** — Enter your weekly stats and your opponent's to see a category-by-category scoreboard. The strategy engine classifies each category:
+- CHASE: losing by a small margin (still flippable)
+- HOLD: slim lead worth protecting
+- SAFE: comfortable lead, can deprioritize
+- PUNT: too far behind to realistically catch up
+
+**Adaptive Lineup Weights** — When matchup data is provided, category weights shift automatically and the lineup reshuffles. Chasing HR and R? Power hitters get bumped up. Saves locked in? RP contributions deprioritized.
+
+**Pitching Planner** — Rates your SP staff by K/start, W/start, and ERA risk tier (Elite through Sit). Shows the top streaming candidates from the free agent pool.
+
+**Injury Integration** — IL players are excluded from lineup recommendations. DTD and OUT players stay eligible but get flagged with warnings. Full injury report shows status, return date, and details for affected roster players.
+
+### Key Files
+
+| File | Purpose |
+|---|---|
+| `manage.py` | CLI entry point for daily management |
+| `roster.py` | Roster loading, fuzzy name matching, display |
+| `lineup.py` | Lineup optimizer with position-aware slot filling |
+| `matchup.py` | Weekly H2H category tracker and strategy engine |
+| `pitching.py` | SP analysis, risk tiers, streaming candidates |
+| `injuries.py` | Injury data parsing, roster matching, display |
+
+---
+
+## Injury Tracking
+
+**Entry point:** `fetch_injuries.py` (run locally with internet access)
+
+Three data sources, in priority order:
+
+1. **MLB Stats API** — `fetch_injuries.py` pulls recent IL transactions and filters out players who were subsequently activated.
+2. **ESPN** — Richer data with status classifications, estimated return dates, and comments. Requires `beautifulsoup4`.
+3. **Manual** — Edit `inputs/injuries.json` directly. The format is simple and documented.
+
+A pre-seeded snapshot with ~27 injuries (current as of mid-March 2026) is included.
+
+### Refreshing Injury Data
+
+```bash
+python fetch_injuries.py --source mlb    # MLB Stats API
+python fetch_injuries.py --source espn   # ESPN (requires beautifulsoup4)
+python fetch_injuries.py --source both   # Merged from both
+```
+
+---
+
+## Customization
+
+**`config.py`** — All league-specific settings: teams, budget, roster slots, scoring categories, budget split, playing time thresholds, and FanGraphs column mappings. This is the only file you need to edit to adapt the system for a different league.
+
+**`positions.py`** — MLBAMID-to-position map covering all draftable hitters. Add or correct entries by editing the `POSITION_MAP` dictionary.
+
+---
+
+## Project Roadmap
+
+- [x] Module 1: Draft Prep — Auction valuations and cheat sheet
+- [x] Module 2: Lineup Manager — Daily optimization, matchup tracking, pitching planner
+- [x] Injury Tracking — MLB Stats API + ESPN integration, roster flagging
+- [ ] Module 3: Waiver Wire — Free agent recommendations based on category needs
+- [ ] Module 4: Trade Evaluator — Analyze trades against category strengths and weaknesses

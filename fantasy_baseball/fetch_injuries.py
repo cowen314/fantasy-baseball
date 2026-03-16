@@ -139,7 +139,7 @@ def fetch_espn_roster_status():
 
 def main():
     parser = argparse.ArgumentParser(description="Fetch MLB injury data")
-    parser.add_argument("--output", default="data/injuries.json")
+    parser.add_argument("--output", default="inputs/injuries.json")
     parser.add_argument("--source", choices=["mlb", "espn", "both"], default="mlb")
     args = parser.parse_args()
 
