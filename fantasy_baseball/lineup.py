@@ -8,7 +8,7 @@ import pandas as pd
 import numpy as np
 from typing import Optional
 
-import config
+import fantasy_baseball.config as config
 
 
 def compute_per_game_rates(roster_df: pd.DataFrame) -> pd.DataFrame:

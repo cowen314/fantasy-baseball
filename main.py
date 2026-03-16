@@ -26,17 +26,16 @@ from contextlib import redirect_stdout
 
 import pandas as pd
 
-import config
-from roster import (
+from fantasy_baseball.roster import (
     load_valued_projections, parse_roster_text, build_roster,
     save_roster, load_saved_roster, display_roster,
 )
-from lineup import recommend_lineup, display_lineup, display_start_sit
-from matchup import (
+from fantasy_baseball.lineup import recommend_lineup, display_lineup, display_start_sit
+from fantasy_baseball.matchup import (
     create_empty_matchup, score_matchup, display_matchup, display_strategy,
 )
-from pitching import display_pitching_plan
-from injuries import (
+from fantasy_baseball.pitching import display_pitching_plan
+from fantasy_baseball.injuries import (
     parse_injury_json, build_injury_map, match_injuries_to_roster,
     display_roster_injuries, generate_fetch_script,
 )

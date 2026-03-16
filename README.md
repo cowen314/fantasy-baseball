@@ -3,6 +3,7 @@
 A Python-based auction valuation engine for 12-team H2H Categories leagues on ESPN.
 
 ## Your League Settings
+
 - **Format:** Head-to-Head Categories, Auction ($260)
 - **Teams:** 12
 - **Hitting cats:** R, HR, RBI, SB, OBP
@@ -19,19 +20,21 @@ Download free Steamer projections from FanGraphs:
 2. Select **Steamer** (or ATC for blended projections)
 3. Set to **Hitters**, current season
 4. Click **Export Data** (CSV download)
-5. Save as `data/hitters.csv`
+5. Save as `inputs/hitters.csv`
 
 **Pitchers:**
 1. Same page, switch to **Pitchers**
-2. Export and save as `data/pitchers.csv`
+2. Export and save as `inputs/pitchers.csv`
 
 ### 2. Run the Tool
+
 ```bash
 cd fantasy-baseball
-python main.py --hitters data/hitters.csv --pitchers data/pitchers.csv
+python main.py --hitters inputs/hitters.csv --pitchers inputs/pitchers.csv
 ```
 
 ### 3. Review Outputs
+
 - `output/cheatsheet.csv` — Full ranked list with dollar values and tiers
 - `output/hitters_valued.csv` — Detailed hitter breakdown
 - `output/pitchers_valued.csv` — Detailed pitcher breakdown
@@ -40,6 +43,7 @@ python main.py --hitters data/hitters.csv --pitchers data/pitchers.csv
 ## How It Works
 
 ### Valuation Method: Z-Score Auction Dollars
+
 1. **Filter** players by minimum playing time (200 PA hitters, 30 IP pitchers)
 2. **Z-score** each category relative to the draftable player pool
    - Counting stats (R, HR, RBI, SB, K, W, SV): standard z-score
@@ -53,6 +57,7 @@ python main.py --hitters data/hitters.csv --pitchers data/pitchers.csv
 5. **Tier** players using quantile breaks for quick draft-day reference
 
 ### Key Design Decisions
+
 - **OBP over AVG:** Your league uses OBP, so high-walk players get a value boost
   that most generic rankings miss.
 - **Marginal rate stats:** A reliever with a 2.50 ERA over 60 IP is less valuable
@@ -64,6 +69,7 @@ python main.py --hitters data/hitters.csv --pitchers data/pitchers.csv
 ## Customization
 
 ### CLI Options
+
 ```bash
 python main.py --hitters data/h.csv --pitchers data/p.csv \
     --min-pa 150          # Lower PA threshold to include more hitters
@@ -77,19 +83,6 @@ Edit `config.py` to adjust:
 - Number of players drafted at each position
 - Minimum playing time thresholds
 - Column mappings if using non-FanGraphs data sources
-
-## Project Roadmap
-This is Module 1 of a larger fantasy baseball management system:
-
-- [x] **Module 1: Draft Prep** — Auction valuations & cheat sheet
-- [ ] **Module 2: Lineup Management** — Daily/weekly roster optimization
-- [ ] **Module 3: Waiver Wire** — Free agent recommendations by category need
-- [ ] **Module 4: Trade Evaluator** — Analyze trades vs. your category strengths
-
-## Dependencies
-- Python 3.10+
-- pandas
-- numpy
 
 ---
 
