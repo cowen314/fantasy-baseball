@@ -1,0 +1,59 @@
+name: Daily Python Script
+ 
+on:
+  schedule:
+    - cron: '0 13 * * *'  # 7:00 AM Central (UTC-6 standard / UTC-5 daylight)
+  push:
+  workflow_dispatch:       # Allow manual runs from GitHub UI
+ 
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    container:
+      image: python:3.12-slim
+    if: github.event_name == 'push'
+ 
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+ 
+      - name: Install linting tools
+        run: pip install ruff pyright
+ 
+      - name: Run ruff
+        run: ruff check .
+ 
+      - name: Run pyright
+        run: pyright .
+ 
+  daily-projections:
+    runs-on: ubuntu-latest
+    container:
+      image: python:3.12-slim
+    if: github.event_name == 'schedule' || github.event_name == 'push'
+ 
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+ 
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+ 
+      - name: Fetch injuries
+        run: python fetch_injuries.py --source mlb
+ 
+      - name: Run projections
+        run: |
+          python manage.py \
+            --roster-file inputs/my_roster.txt \
+            --hitters inputs/hitters.csv \
+            --pitchers inputs/pitchers.csv \
+            --injuries outputs/injuries.json
+ 
+      - name: Upload outputs
+        uses: actions/upload-artifact@v4
+        with:
+          name: daily-projections-${{ github.run_id }}
+          path: outputs/
