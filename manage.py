@@ -69,7 +69,7 @@ def print_header():
     print()
     print("=" * 65)
     print("  FANTASY BASEBALL LINEUP MANAGER")
-    print(f"  12-Team H2H Categories | Daily Lineups | ESPN")
+    print("  12-Team H2H Categories | Daily Lineups | ESPN")
     print("=" * 65)
     print()
 
