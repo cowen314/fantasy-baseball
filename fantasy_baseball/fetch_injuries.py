@@ -50,7 +50,7 @@ def fetch_mlb_injuries():
             continue
 
         desc = txn.get("description", "")
-        txn_type = txn.get("typeDesc", "")
+        # txn_type = txn.get("typeDesc", "")
         date = txn.get("date", "")
 
         # Only keep IL placements (not activations)
@@ -64,15 +64,19 @@ def fetch_mlb_injuries():
             elif "10-day" in desc.lower():
                 status = "10-Day-IL"
 
-            injuries.append({
-                "name": name,
-                "position": player.get("primaryPosition", {}).get("abbreviation", ""),
-                "status": status,
-                "comment": desc[:200],
-                "date": date,
-                "est_return": "",
-                "fantasy_status": "IL" if "IL" in status else "OUT",
-            })
+            injuries.append(
+                {
+                    "name": name,
+                    "position": player.get("primaryPosition", {}).get(
+                        "abbreviation", ""
+                    ),
+                    "status": status,
+                    "comment": desc[:200],
+                    "date": date,
+                    "est_return": "",
+                    "fantasy_status": "IL" if "IL" in status else "OUT",
+                }
+            )
             seen.add(name)
 
     # Remove players who were later activated
@@ -125,14 +129,16 @@ def fetch_espn_roster_status():
                 elif "Day-To-Day" in status:
                     fantasy_status = "DTD"
 
-                injuries.append({
-                    "name": name,
-                    "position": pos,
-                    "est_return": est_return,
-                    "status": status,
-                    "comment": comment,
-                    "fantasy_status": fantasy_status,
-                })
+                injuries.append(
+                    {
+                        "name": name,
+                        "position": pos,
+                        "est_return": est_return,
+                        "status": status,
+                        "comment": comment,
+                        "fantasy_status": fantasy_status,
+                    }
+                )
 
     return injuries
 
@@ -161,9 +167,12 @@ def main():
         print(f"  Total after ESPN merge: {len(injuries)}")
 
     import os
+
     os.makedirs(os.path.dirname(args.output) or ".", exist_ok=True)
     with open(args.output, "w") as f:
-        json.dump({"updated": datetime.now().isoformat(), "injuries": injuries}, f, indent=2)
+        json.dump(
+            {"updated": datetime.now().isoformat(), "injuries": injuries}, f, indent=2
+        )
 
     print(f"\nSaved {len(injuries)} injuries to {args.output}")
 
