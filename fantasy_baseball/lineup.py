@@ -17,29 +17,47 @@ def compute_per_game_rates(roster_df: pd.DataFrame) -> pd.DataFrame:
     pitchers = df["player_type"] == "pitcher"
 
     if "G" in df.columns:
-        df.loc[hitters, "games"] = pd.to_numeric(df.loc[hitters, "G"], errors="coerce").fillna(140)
+        df.loc[hitters, "games"] = pd.to_numeric(
+            df.loc[hitters, "G"], errors="coerce"
+        ).fillna(140)
     else:
-        df.loc[hitters, "games"] = (pd.to_numeric(df.loc[hitters, "PA"], errors="coerce").fillna(500) / 4.5).clip(lower=1)
+        df.loc[hitters, "games"] = (
+            pd.to_numeric(df.loc[hitters, "PA"], errors="coerce").fillna(500) / 4.5
+        ).clip(lower=1)
 
     for cat in ["R", "HR", "RBI", "SB"]:
         if cat in df.columns:
-            df.loc[hitters, f"{cat}_pg"] = pd.to_numeric(df.loc[hitters, cat], errors="coerce").fillna(0) / df.loc[hitters, "games"]
+            df.loc[hitters, f"{cat}_pg"] = (
+                pd.to_numeric(df.loc[hitters, cat], errors="coerce").fillna(0)
+                / df.loc[hitters, "games"]
+            )
 
     if "OBP" in df.columns:
-        df.loc[hitters, "OBP_pg"] = pd.to_numeric(df.loc[hitters, "OBP"], errors="coerce").fillna(0)
+        df.loc[hitters, "OBP_pg"] = pd.to_numeric(
+            df.loc[hitters, "OBP"], errors="coerce"
+        ).fillna(0)
 
     if "G" in df.columns:
-        df.loc[pitchers, "games"] = pd.to_numeric(df.loc[pitchers, "G"], errors="coerce").fillna(30)
+        df.loc[pitchers, "games"] = pd.to_numeric(
+            df.loc[pitchers, "G"], errors="coerce"
+        ).fillna(30)
     else:
-        df.loc[pitchers, "games"] = (pd.to_numeric(df.loc[pitchers, "IP"], errors="coerce").fillna(100) / 6).clip(lower=1)
+        df.loc[pitchers, "games"] = (
+            pd.to_numeric(df.loc[pitchers, "IP"], errors="coerce").fillna(100) / 6
+        ).clip(lower=1)
 
     for cat in ["K", "W", "SV"]:
         if cat in df.columns:
-            df.loc[pitchers, f"{cat}_pg"] = pd.to_numeric(df.loc[pitchers, cat], errors="coerce").fillna(0) / df.loc[pitchers, "games"]
+            df.loc[pitchers, f"{cat}_pg"] = (
+                pd.to_numeric(df.loc[pitchers, cat], errors="coerce").fillna(0)
+                / df.loc[pitchers, "games"]
+            )
 
     for cat in ["ERA", "WHIP"]:
         if cat in df.columns:
-            df.loc[pitchers, f"{cat}_pg"] = pd.to_numeric(df.loc[pitchers, cat], errors="coerce").fillna(5)
+            df.loc[pitchers, f"{cat}_pg"] = pd.to_numeric(
+                df.loc[pitchers, cat], errors="coerce"
+            ).fillna(5)
 
     return df
 
@@ -92,7 +110,9 @@ def recommend_lineup(
     pitchers = df[df["player_type"] == "pitcher"].copy()
 
     hitters["daily_score"] = hitters.apply(lambda r: score_hitter(r, h_weights), axis=1)
-    pitchers["daily_score"] = pitchers.apply(lambda r: score_pitcher(r, p_weights), axis=1)
+    pitchers["daily_score"] = pitchers.apply(
+        lambda r: score_pitcher(r, p_weights), axis=1
+    )
 
     slot_order = [
         ("C", ["C"]),
@@ -121,7 +141,9 @@ def recommend_lineup(
                 continue
             lineup[slot_name] = row["name"]
             used.add(row["name"])
-            reasoning[row["name"]] = f"Start at {slot_name} (score: {row['daily_score']:.3f})"
+            reasoning[row["name"]] = (
+                f"Start at {slot_name} (score: {row['daily_score']:.3f})"
+            )
             break
 
     bench_hitters = [r["name"] for _, r in hitters.iterrows() if r["name"] not in used]
@@ -129,14 +151,18 @@ def recommend_lineup(
     pitcher_used = set()
     pitchers_sorted = pitchers.sort_values("daily_score", ascending=False)
 
-    sp_players = pitchers_sorted[pitchers_sorted["positions"].str.contains("SP", na=False)]
+    sp_players = pitchers_sorted[
+        pitchers_sorted["positions"].str.contains("SP", na=False)
+    ]
     sp_count = 0
     for _, row in sp_players.iterrows():
         if sp_count >= config.PITCHER_SLOTS.get("SP", 5):
             break
         lineup[f"SP{sp_count + 1}"] = row["name"]
         pitcher_used.add(row["name"])
-        reasoning[row["name"]] = f"Start at SP{sp_count + 1} (score: {row['daily_score']:.3f})"
+        reasoning[row["name"]] = (
+            f"Start at SP{sp_count + 1} (score: {row['daily_score']:.3f})"
+        )
         sp_count += 1
 
     rp_players = pitchers_sorted[
@@ -149,18 +175,26 @@ def recommend_lineup(
             break
         lineup[f"RP{rp_count + 1}"] = row["name"]
         pitcher_used.add(row["name"])
-        reasoning[row["name"]] = f"Start at RP{rp_count + 1} (score: {row['daily_score']:.3f})"
+        reasoning[row["name"]] = (
+            f"Start at RP{rp_count + 1} (score: {row['daily_score']:.3f})"
+        )
         rp_count += 1
 
-    bench_pitchers = [r["name"] for _, r in pitchers.iterrows() if r["name"] not in pitcher_used]
+    bench_pitchers = [
+        r["name"] for _, r in pitchers.iterrows() if r["name"] not in pitcher_used
+    ]
 
     return {
         "lineup": lineup,
         "bench_hitters": bench_hitters,
         "bench_pitchers": bench_pitchers,
         "reasoning": reasoning,
-        "hitter_scores": hitters[["name", "positions", "daily_score"]].sort_values("daily_score", ascending=False),
-        "pitcher_scores": pitchers[["name", "positions", "daily_score"]].sort_values("daily_score", ascending=False),
+        "hitter_scores": hitters[["name", "positions", "daily_score"]].sort_values(
+            "daily_score", ascending=False
+        ),
+        "pitcher_scores": pitchers[["name", "positions", "daily_score"]].sort_values(
+            "daily_score", ascending=False
+        ),
     }
 
 
@@ -174,7 +208,9 @@ def display_lineup(result: dict):
     print("  " + "-" * 40)
     for slot in ["C", "1B", "2B", "3B", "SS", "IF", "OF1", "OF2", "OF3", "UTIL"]:
         player = lineup.get(slot, "--- EMPTY ---")
-        display_slot = slot.replace("OF1", "OF").replace("OF2", "OF").replace("OF3", "OF")
+        display_slot = (
+            slot.replace("OF1", "OF").replace("OF2", "OF").replace("OF3", "OF")
+        )
         print(f"    {display_slot:<6} {player}")
 
     print("\n  PITCHERS")

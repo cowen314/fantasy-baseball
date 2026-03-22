@@ -5,22 +5,48 @@ Track H2H category matchup for the week and generate strategy adjustments.
 """
 
 
-
-
 def create_empty_matchup() -> dict:
     """Create an empty matchup scorecard."""
     return {
         "my_stats": {
-            "R": 0, "HR": 0, "RBI": 0, "SB": 0, "OBP": 0.0,
-            "K": 0, "W": 0, "SV": 0, "ERA": 0.0, "WHIP": 0.0,
-            "AB": 0, "H": 0, "BB_h": 0, "PA": 0,
-            "IP": 0, "ER": 0, "H_p": 0, "BB_p": 0,
+            "R": 0,
+            "HR": 0,
+            "RBI": 0,
+            "SB": 0,
+            "OBP": 0.0,
+            "K": 0,
+            "W": 0,
+            "SV": 0,
+            "ERA": 0.0,
+            "WHIP": 0.0,
+            "AB": 0,
+            "H": 0,
+            "BB_h": 0,
+            "PA": 0,
+            "IP": 0,
+            "ER": 0,
+            "H_p": 0,
+            "BB_p": 0,
         },
         "opp_stats": {
-            "R": 0, "HR": 0, "RBI": 0, "SB": 0, "OBP": 0.0,
-            "K": 0, "W": 0, "SV": 0, "ERA": 0.0, "WHIP": 0.0,
-            "AB": 0, "H": 0, "BB_h": 0, "PA": 0,
-            "IP": 0, "ER": 0, "H_p": 0, "BB_p": 0,
+            "R": 0,
+            "HR": 0,
+            "RBI": 0,
+            "SB": 0,
+            "OBP": 0.0,
+            "K": 0,
+            "W": 0,
+            "SV": 0,
+            "ERA": 0.0,
+            "WHIP": 0.0,
+            "AB": 0,
+            "H": 0,
+            "BB_h": 0,
+            "PA": 0,
+            "IP": 0,
+            "ER": 0,
+            "H_p": 0,
+            "BB_p": 0,
         },
     }
 
@@ -52,7 +78,8 @@ def score_matchup(my_stats: dict, opp_stats: dict) -> dict:
     theirs = opp_stats.get("OBP", 0)
     diff = mine - theirs
     results["OBP"] = {
-        "mine": mine, "theirs": theirs,
+        "mine": mine,
+        "theirs": theirs,
         "diff": round(diff, 4),
         "status": "WIN" if diff > 0 else ("LOSE" if diff < 0 else "TIE"),
     }
@@ -62,7 +89,9 @@ def score_matchup(my_stats: dict, opp_stats: dict) -> dict:
         theirs = opp_stats.get(cat, 0)
         diff = mine - theirs
         results[cat] = {
-            "mine": mine, "theirs": theirs, "diff": diff,
+            "mine": mine,
+            "theirs": theirs,
+            "diff": diff,
             "status": "WIN" if diff > 0 else ("LOSE" if diff < 0 else "TIE"),
         }
 
@@ -72,7 +101,9 @@ def score_matchup(my_stats: dict, opp_stats: dict) -> dict:
         theirs = opp_stats.get(cat, 0)
         diff = theirs - mine  # positive = I'm better
         results[cat] = {
-            "mine": mine, "theirs": theirs, "diff": round(diff, 3),
+            "mine": mine,
+            "theirs": theirs,
+            "diff": round(diff, 3),
             "status": "WIN" if diff > 0 else ("LOSE" if diff < 0 else "TIE"),
         }
 
@@ -101,10 +132,16 @@ def recommend_category_weights(results: dict) -> tuple[dict, dict, list]:
     notes = []
 
     thresholds = {
-        "R": (5, 15), "HR": (3, 8), "RBI": (5, 15), "SB": (3, 8),
+        "R": (5, 15),
+        "HR": (3, 8),
+        "RBI": (5, 15),
+        "SB": (3, 8),
         "OBP": (0.010, 0.030),
-        "K": (5, 15), "W": (3, 8), "SV": (3, 8),
-        "ERA": (0.50, 1.50), "WHIP": (0.05, 0.15),
+        "K": (5, 15),
+        "W": (3, 8),
+        "SV": (3, 8),
+        "ERA": (0.50, 1.50),
+        "WHIP": (0.05, 0.15),
     }
 
     for cat, r in results.items():
@@ -114,16 +151,24 @@ def recommend_category_weights(results: dict) -> tuple[dict, dict, list]:
 
         if r["status"] == "LOSE" and abs_diff <= close:
             w[cat] = 1.5
-            notes.append(f"  CHASE {cat}: losing by a small margin ({r['mine']} vs {r['theirs']})")
+            notes.append(
+                f"  CHASE {cat}: losing by a small margin ({r['mine']} vs {r['theirs']})"
+            )
         elif r["status"] == "LOSE" and abs_diff > far:
             w[cat] = 0.3
-            notes.append(f"  PUNT  {cat}: too far behind to flip ({r['mine']} vs {r['theirs']})")
+            notes.append(
+                f"  PUNT  {cat}: too far behind to flip ({r['mine']} vs {r['theirs']})"
+            )
         elif r["status"] == "WIN" and abs_diff > far:
             w[cat] = 0.5
-            notes.append(f"  SAFE  {cat}: comfortable lead ({r['mine']} vs {r['theirs']})")
+            notes.append(
+                f"  SAFE  {cat}: comfortable lead ({r['mine']} vs {r['theirs']})"
+            )
         elif r["status"] == "WIN" and abs_diff <= close:
             w[cat] = 1.3
-            notes.append(f"  HOLD  {cat}: slim lead, keep pushing ({r['mine']} vs {r['theirs']})")
+            notes.append(
+                f"  HOLD  {cat}: slim lead, keep pushing ({r['mine']} vs {r['theirs']})"
+            )
 
     return h_weights, p_weights, notes
 
@@ -188,8 +233,12 @@ def display_strategy(results: dict) -> tuple[dict, dict]:
         print("  All categories fairly even — stick with balanced lineup.")
     print()
     print("  Adjusted Category Weights:")
-    print(f"    Hit: R={h_w['R']:.1f} HR={h_w['HR']:.1f} RBI={h_w['RBI']:.1f} SB={h_w['SB']:.1f} OBP={h_w['OBP']:.1f}")
-    print(f"    Pit: K={p_w['K']:.1f} W={p_w['W']:.1f} SV={p_w['SV']:.1f} ERA={p_w['ERA']:.1f} WHIP={p_w['WHIP']:.1f}")
+    print(
+        f"    Hit: R={h_w['R']:.1f} HR={h_w['HR']:.1f} RBI={h_w['RBI']:.1f} SB={h_w['SB']:.1f} OBP={h_w['OBP']:.1f}"
+    )
+    print(
+        f"    Pit: K={p_w['K']:.1f} W={p_w['W']:.1f} SV={p_w['SV']:.1f} ERA={p_w['ERA']:.1f} WHIP={p_w['WHIP']:.1f}"
+    )
     print()
 
     return h_w, p_w

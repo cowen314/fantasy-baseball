@@ -54,7 +54,9 @@ def load_hitters(filepath: str) -> pd.DataFrame:
     if "positions" in df.columns:
         df["positions"] = df["positions"].fillna("UTIL").astype(str)
     elif "MLBAMID" in df.columns:
-        df["MLBAMID"] = pd.to_numeric(df["MLBAMID"], errors="coerce").fillna(0).astype(int)
+        df["MLBAMID"] = (
+            pd.to_numeric(df["MLBAMID"], errors="coerce").fillna(0).astype(int)
+        )
         df["positions"] = df["MLBAMID"].apply(lambda x: get_position(x))
         mapped = df[df["positions"] != "UTIL"]
         print(f"  Position lookup: {len(mapped)}/{len(df)} players mapped via MLBAMID")
@@ -173,8 +175,14 @@ def compute_pitcher_zscores(df: pd.DataFrame) -> pd.DataFrame:
             df[f"z_{cat}"] = 0.0
 
     # ERA - marginal (inverted: lower is better)
-    replacement_era = df.loc[df["IP"] >= 50, "ERA"].median() if len(df[df["IP"] >= 50]) > 0 else df["ERA"].median()
-    df["ERA_marginal"] = df["IP"] * (replacement_era - df["ERA"])  # positive = better than replacement
+    replacement_era = (
+        df.loc[df["IP"] >= 50, "ERA"].median()
+        if len(df[df["IP"] >= 50]) > 0
+        else df["ERA"].median()
+    )
+    df["ERA_marginal"] = df["IP"] * (
+        replacement_era - df["ERA"]
+    )  # positive = better than replacement
     mean_m = df["ERA_marginal"].mean()
     std_m = df["ERA_marginal"].std()
     if std_m > 0:
@@ -183,7 +191,11 @@ def compute_pitcher_zscores(df: pd.DataFrame) -> pd.DataFrame:
         df["z_ERA"] = 0.0
 
     # WHIP - marginal (inverted: lower is better)
-    replacement_whip = df.loc[df["IP"] >= 50, "WHIP"].median() if len(df[df["IP"] >= 50]) > 0 else df["WHIP"].median()
+    replacement_whip = (
+        df.loc[df["IP"] >= 50, "WHIP"].median()
+        if len(df[df["IP"] >= 50]) > 0
+        else df["WHIP"].median()
+    )
     df["WHIP_marginal"] = df["IP"] * (replacement_whip - df["WHIP"])
     mean_m = df["WHIP_marginal"].mean()
     std_m = df["WHIP_marginal"].std()
@@ -240,13 +252,17 @@ def zscores_to_dollars(
     # Convert to dollars: each player's share of the available pool
     h_z_sum = h_sorted["z_adjusted"].sum()
     if h_z_sum > 0:
-        h_sorted["dollar_value"] = (h_sorted["z_adjusted"] / h_z_sum * hitter_pool) + config.MIN_BID
+        h_sorted["dollar_value"] = (
+            h_sorted["z_adjusted"] / h_z_sum * hitter_pool
+        ) + config.MIN_BID
     else:
         h_sorted["dollar_value"] = config.MIN_BID
 
     p_z_sum = p_sorted["z_adjusted"].sum()
     if p_z_sum > 0:
-        p_sorted["dollar_value"] = (p_sorted["z_adjusted"] / p_z_sum * pitcher_pool) + config.MIN_BID
+        p_sorted["dollar_value"] = (
+            p_sorted["z_adjusted"] / p_z_sum * pitcher_pool
+        ) + config.MIN_BID
     else:
         p_sorted["dollar_value"] = config.MIN_BID
 
@@ -257,16 +273,22 @@ def zscores_to_dollars(
     # Also assign values to undrafted players (for reference)
     hitters = hitters.merge(
         h_sorted[["name", "dollar_value", "z_adjusted"]],
-        on="name", how="left", suffixes=("", "_drafted")
+        on="name",
+        how="left",
+        suffixes=("", "_drafted"),
     )
     hitters["dollar_value"] = hitters["dollar_value"].fillna(config.MIN_BID).astype(int)
     hitters["z_adjusted"] = hitters["z_adjusted"].fillna(0)
 
     pitchers = pitchers.merge(
         p_sorted[["name", "dollar_value", "z_adjusted"]],
-        on="name", how="left", suffixes=("", "_drafted")
+        on="name",
+        how="left",
+        suffixes=("", "_drafted"),
     )
-    pitchers["dollar_value"] = pitchers["dollar_value"].fillna(config.MIN_BID).astype(int)
+    pitchers["dollar_value"] = (
+        pitchers["dollar_value"].fillna(config.MIN_BID).astype(int)
+    )
     pitchers["z_adjusted"] = pitchers["z_adjusted"].fillna(0)
 
     return hitters, pitchers
@@ -286,7 +308,7 @@ def assign_tiers(df: pd.DataFrame, n_tiers: int = 8) -> pd.DataFrame:
         tier_values = pd.qcut(
             draftable["dollar_value"].rank(method="first"),
             q=min(n_tiers, len(draftable)),
-            labels=range(1, min(n_tiers, len(draftable)) + 1)
+            labels=range(1, min(n_tiers, len(draftable)) + 1),
         ).astype(int)
         tier_map = dict(zip(draftable["name"], tier_values))
         df["tier"] = df["name"].map(tier_map).fillna(n_tiers + 1).astype(int)
@@ -305,7 +327,7 @@ def compute_category_strengths(df: pd.DataFrame, categories: list[str]) -> pd.Da
             df[f"{cat}_strength"] = pd.cut(
                 df[z_col],
                 bins=[-np.inf, -1, -0.5, 0.5, 1, np.inf],
-                labels=["--", "-", "avg", "+", "++"]
+                labels=["--", "-", "avg", "+", "++"],
             )
     return df
 
@@ -324,7 +346,9 @@ def generate_cheatsheet(
     h_display_cols = ["name", "positions", "dollar_value", "tier"]
     h_display_cols += h_cats
     h_display_cols += [f"z_{c}" for c in h_cats]
-    h_display_cols += [f"{c}_strength" for c in h_cats if f"{c}_strength" in hitters.columns]
+    h_display_cols += [
+        f"{c}_strength" for c in h_cats if f"{c}_strength" in hitters.columns
+    ]
     h_display_cols = [c for c in h_display_cols if c in hitters.columns]
 
     h_out = hitters[h_display_cols].copy()
@@ -334,7 +358,9 @@ def generate_cheatsheet(
     p_display_cols = ["name", "positions", "dollar_value", "tier"]
     p_display_cols += p_cats
     p_display_cols += [f"z_{c}" for c in p_cats]
-    p_display_cols += [f"{c}_strength" for c in p_cats if f"{c}_strength" in pitchers.columns]
+    p_display_cols += [
+        f"{c}_strength" for c in p_cats if f"{c}_strength" in pitchers.columns
+    ]
     p_display_cols = [c for c in p_display_cols if c in pitchers.columns]
 
     p_out = pitchers[p_display_cols].copy()
@@ -342,7 +368,9 @@ def generate_cheatsheet(
 
     # Combine and sort by dollar value
     combined = pd.concat([h_out, p_out], ignore_index=True, sort=False)
-    combined = combined.sort_values("dollar_value", ascending=False).reset_index(drop=True)
+    combined = combined.sort_values("dollar_value", ascending=False).reset_index(
+        drop=True
+    )
     combined.index = combined.index + 1  # 1-based ranking
     combined.index.name = "rank"
 

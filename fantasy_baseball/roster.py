@@ -13,10 +13,10 @@ from difflib import get_close_matches
 from typing import Optional
 
 
-
 def load_projections(hitters_path: str, pitchers_path: str) -> tuple:
     """Load projection data from Module 1."""
     from valuations import load_hitters, load_pitchers
+
     h = load_hitters(hitters_path)
     p = load_pitchers(pitchers_path)
     return h, p
@@ -25,10 +25,15 @@ def load_projections(hitters_path: str, pitchers_path: str) -> tuple:
 def load_valued_projections(hitters_path: str, pitchers_path: str) -> tuple:
     """Load projections AND run them through the valuation engine."""
     from valuations import (
-        load_hitters, load_pitchers, filter_draftable,
-        compute_hitter_zscores, compute_pitcher_zscores,
-        zscores_to_dollars, assign_tiers,
+        load_hitters,
+        load_pitchers,
+        filter_draftable,
+        compute_hitter_zscores,
+        compute_pitcher_zscores,
+        zscores_to_dollars,
+        assign_tiers,
     )
+
     h = load_hitters(hitters_path)
     p = load_pitchers(pitchers_path)
 
@@ -47,13 +52,14 @@ def load_valued_projections(hitters_path: str, pitchers_path: str) -> tuple:
 
 def strip_accents(s: str) -> str:
     """Remove accent marks for comparison."""
-    return ''.join(
-        c for c in unicodedata.normalize('NFD', s)
-        if unicodedata.category(c) != 'Mn'
+    return "".join(
+        c for c in unicodedata.normalize("NFD", s) if unicodedata.category(c) != "Mn"
     )
 
 
-def fuzzy_match_player(name: str, all_names: list, cutoff: float = 0.6) -> Optional[str]:
+def fuzzy_match_player(
+    name: str, all_names: list, cutoff: float = 0.6
+) -> Optional[str]:
     """Fuzzy match a player name against a name list."""
     name_clean = strip_accents(name.strip().lower())
 
@@ -95,10 +101,15 @@ def parse_roster_text(text: str) -> list:
         line = line.strip()
         if not line:
             continue
-        line = re.sub(r'^(C|1B|2B|3B|SS|IF|OF|UTIL|SP|RP|P|DH|BE|IL|BN)\s*[-:\.]\s*', '', line, flags=re.IGNORECASE)
-        line = re.sub(r'^\d+[\.\)\-]\s*', '', line)
-        line = re.sub(r'\s*\([A-Z]{2,3}\)\s*$', '', line)
-        line = re.sub(r'\s+(C|1B|2B|3B|SS|OF|SP|RP|DH)\s*$', '', line)
+        line = re.sub(
+            r"^(C|1B|2B|3B|SS|IF|OF|UTIL|SP|RP|P|DH|BE|IL|BN)\s*[-:\.]\s*",
+            "",
+            line,
+            flags=re.IGNORECASE,
+        )
+        line = re.sub(r"^\d+[\.\)\-]\s*", "", line)
+        line = re.sub(r"\s*\([A-Z]{2,3}\)\s*$", "", line)
+        line = re.sub(r"\s+(C|1B|2B|3B|SS|OF|SP|RP|DH)\s*$", "", line)
         line = line.strip()
         if line and len(line) > 2:
             players.append(line)
@@ -106,7 +117,9 @@ def parse_roster_text(text: str) -> list:
     return players
 
 
-def build_roster(player_names: list, hitters_df: pd.DataFrame, pitchers_df: pd.DataFrame) -> pd.DataFrame:
+def build_roster(
+    player_names: list, hitters_df: pd.DataFrame, pitchers_df: pd.DataFrame
+) -> pd.DataFrame:
     """
     Match player names to projection data.
 

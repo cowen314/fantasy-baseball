@@ -17,7 +17,7 @@ HITTER_SLOTS = {
     "2B": 1,
     "3B": 1,
     "SS": 1,
-    "IF": 1,    # any infielder
+    "IF": 1,  # any infielder
     "OF": 3,
     "UTIL": 1,  # any hitter
 }
@@ -35,23 +35,25 @@ TOTAL_ROSTER = TOTAL_STARTER_SLOTS + BENCH_SLOTS + IL_SLOTS  # 24
 
 # How many hitters/pitchers drafted league-wide (starters + ~60/40 bench split)
 HITTERS_DRAFTED = NUM_TEAMS * (TOTAL_HITTER_SLOTS + 2)  # ~144 (assume 2 bench hitters)
-PITCHERS_DRAFTED = NUM_TEAMS * (TOTAL_PITCHER_SLOTS + 1)  # ~108 (assume 1 bench pitcher)
+PITCHERS_DRAFTED = NUM_TEAMS * (
+    TOTAL_PITCHER_SLOTS + 1
+)  # ~108 (assume 1 bench pitcher)
 
 # === Scoring Categories ===
 HITTING_CATEGORIES = {
-    "R":   {"display": "Runs",        "type": "counting", "higher_is_better": True},
-    "HR":  {"display": "Home Runs",   "type": "counting", "higher_is_better": True},
-    "RBI": {"display": "RBI",         "type": "counting", "higher_is_better": True},
-    "SB":  {"display": "Stolen Bases","type": "counting", "higher_is_better": True},
-    "OBP": {"display": "On-Base Pct", "type": "rate",     "higher_is_better": True},
+    "R": {"display": "Runs", "type": "counting", "higher_is_better": True},
+    "HR": {"display": "Home Runs", "type": "counting", "higher_is_better": True},
+    "RBI": {"display": "RBI", "type": "counting", "higher_is_better": True},
+    "SB": {"display": "Stolen Bases", "type": "counting", "higher_is_better": True},
+    "OBP": {"display": "On-Base Pct", "type": "rate", "higher_is_better": True},
 }
 
 PITCHING_CATEGORIES = {
-    "K":    {"display": "Strikeouts", "type": "counting", "higher_is_better": True},
-    "W":    {"display": "Wins",       "type": "counting", "higher_is_better": True},
-    "SV":   {"display": "Saves",      "type": "counting", "higher_is_better": True},
-    "ERA":  {"display": "ERA",        "type": "rate",     "higher_is_better": False},
-    "WHIP": {"display": "WHIP",       "type": "rate",     "higher_is_better": False},
+    "K": {"display": "Strikeouts", "type": "counting", "higher_is_better": True},
+    "W": {"display": "Wins", "type": "counting", "higher_is_better": True},
+    "SV": {"display": "Saves", "type": "counting", "higher_is_better": True},
+    "ERA": {"display": "ERA", "type": "rate", "higher_is_better": False},
+    "WHIP": {"display": "WHIP", "type": "rate", "higher_is_better": False},
 }
 
 # === Budget Split ===
@@ -66,15 +68,15 @@ MIN_BID = 1
 # Which positions can fill which roster slots
 # (used for positional scarcity calculations)
 SLOT_ELIGIBILITY = {
-    "C":    ["C", "UTIL"],
-    "1B":   ["1B", "IF", "UTIL"],
-    "2B":   ["2B", "IF", "UTIL"],
-    "3B":   ["3B", "IF", "UTIL"],
-    "SS":   ["SS", "IF", "UTIL"],
-    "OF":   ["OF", "UTIL"],
-    "DH":   ["UTIL"],
-    "SP":   ["SP"],
-    "RP":   ["RP"],
+    "C": ["C", "UTIL"],
+    "1B": ["1B", "IF", "UTIL"],
+    "2B": ["2B", "IF", "UTIL"],
+    "3B": ["3B", "IF", "UTIL"],
+    "SS": ["SS", "IF", "UTIL"],
+    "OF": ["OF", "UTIL"],
+    "DH": ["UTIL"],
+    "SP": ["SP"],
+    "RP": ["RP"],
 }
 
 # === FanGraphs CSV Column Mappings ===
@@ -98,7 +100,7 @@ FANGRAPHS_PITCHER_COLS = {
     "name": "Name",
     "team": "Team",
     "IP": "IP",
-    "K": "SO",       # FanGraphs uses SO for strikeouts
+    "K": "SO",  # FanGraphs uses SO for strikeouts
     "W": "W",
     "SV": "SV",
     "ERA": "ERA",
@@ -110,5 +112,5 @@ FANGRAPHS_PITCHER_COLS = {
 
 # === Minimum Playing Time Thresholds ===
 # Filter out players below these thresholds
-MIN_PA = 200   # plate appearances for hitters
-MIN_IP = 30    # innings pitched for pitchers
+MIN_PA = 200  # plate appearances for hitters
+MIN_IP = 30  # innings pitched for pitchers

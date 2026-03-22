@@ -33,6 +33,7 @@ STATUS_PRIORITY = {
     "Bereavement": "OUT",
 }
 
+
 def classify_status(status: str) -> str:
     """Map raw status to fantasy-relevant category: IL, OUT, DTD, HEALTHY."""
     if not status:
@@ -105,12 +106,13 @@ def build_injury_map(injuries: list[dict]) -> dict:
     Uses fuzzy-ish matching (lowercase, strip accents).
     """
     import unicodedata
+
     injury_map = {}
     for inj in injuries:
         name = inj.get("name", "")
         # Normalize for matching
         name_key = unicodedata.normalize("NFD", name.lower().strip())
-        name_key = ''.join(c for c in name_key if unicodedata.category(c) != 'Mn')
+        name_key = "".join(c for c in name_key if unicodedata.category(c) != "Mn")
         injury_map[name_key] = inj
         # Also store original name for exact match
         injury_map[name.lower().strip()] = inj
@@ -123,6 +125,7 @@ def match_injuries_to_roster(roster_df: pd.DataFrame, injury_map: dict) -> pd.Da
     Adds: injury_status, injury_detail, est_return
     """
     import unicodedata
+
     df = roster_df.copy()
 
     statuses = []
@@ -133,7 +136,7 @@ def match_injuries_to_roster(roster_df: pd.DataFrame, injury_map: dict) -> pd.Da
         name = str(row.get("name", ""))
         # Try normalized match
         name_key = unicodedata.normalize("NFD", name.lower().strip())
-        name_key = ''.join(c for c in name_key if unicodedata.category(c) != 'Mn')
+        name_key = "".join(c for c in name_key if unicodedata.category(c) != "Mn")
 
         inj = injury_map.get(name_key) or injury_map.get(name.lower().strip())
 

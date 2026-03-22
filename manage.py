@@ -25,17 +25,27 @@ from contextlib import redirect_stdout
 
 
 from fantasy_baseball.roster import (
-    load_valued_projections, parse_roster_text, build_roster,
-    save_roster, load_saved_roster, display_roster,
+    load_valued_projections,
+    parse_roster_text,
+    build_roster,
+    save_roster,
+    load_saved_roster,
+    display_roster,
 )
 from fantasy_baseball.lineup import recommend_lineup, display_lineup, display_start_sit
 from fantasy_baseball.matchup import (
-    create_empty_matchup, score_matchup, display_matchup, display_strategy,
+    create_empty_matchup,
+    score_matchup,
+    display_matchup,
+    display_strategy,
 )
 from fantasy_baseball.pitching import display_pitching_plan
 from fantasy_baseball.injuries import (
-    parse_injury_json, build_injury_map, match_injuries_to_roster,
-    display_roster_injuries, generate_fetch_script,
+    parse_injury_json,
+    build_injury_map,
+    match_injuries_to_roster,
+    display_roster_injuries,
+    generate_fetch_script,
 )
 
 
@@ -72,8 +82,12 @@ def main():
     parser.add_argument("--pitchers", required=True)
 
     roster_group = parser.add_mutually_exclusive_group(required=True)
-    roster_group.add_argument("--roster", help="Comma or newline-separated player names")
-    roster_group.add_argument("--roster-file", help="Path to text file with player names")
+    roster_group.add_argument(
+        "--roster", help="Comma or newline-separated player names"
+    )
+    roster_group.add_argument(
+        "--roster-file", help="Path to text file with player names"
+    )
     roster_group.add_argument("--load-roster", action="store_true")
 
     parser.add_argument("--injuries", help="Path to injuries JSON file")
@@ -81,8 +95,11 @@ def main():
     parser.add_argument("--opp-stats", help="Opponent weekly stats")
     parser.add_argument("--save", action="store_true")
     parser.add_argument("--output", default="output")
-    parser.add_argument("--generate-fetcher", action="store_true",
-                        help="Generate fetch_injuries.py script for local use")
+    parser.add_argument(
+        "--generate-fetcher",
+        action="store_true",
+        help="Generate fetch_injuries.py script for local use",
+    )
 
     args = parser.parse_args()
 
@@ -123,7 +140,9 @@ def main():
         injury_map = build_injury_map(injury_list)
         roster_df = match_injuries_to_roster(roster_df, injury_map)
         injured_count = len(roster_df[roster_df["injury_status"] != "HEALTHY"])
-        print(f"  {len(injury_list)} league injuries loaded, {injured_count} on your roster")
+        print(
+            f"  {len(injury_list)} league injuries loaded, {injured_count} on your roster"
+        )
     else:
         roster_df["injury_status"] = "HEALTHY"
         roster_df["injury_detail"] = ""
@@ -156,7 +175,9 @@ def main():
     active_roster = roster_df[roster_df["injury_status"] != "IL"].copy()
     if len(active_roster) < len(roster_df):
         il_players = roster_df[roster_df["injury_status"] == "IL"]["name"].tolist()
-        print(f"\n  Excluding {len(il_players)} IL players from lineup: {', '.join(il_players)}")
+        print(
+            f"\n  Excluding {len(il_players)} IL players from lineup: {', '.join(il_players)}"
+        )
 
     result = recommend_lineup(active_roster, h_weights=h_weights, p_weights=p_weights)
     display_lineup(result)
@@ -165,13 +186,15 @@ def main():
     if injury_map:
         lineup_names = set(result["lineup"].values())
         dtd_in_lineup = roster_df[
-            (roster_df["name"].isin(lineup_names)) &
-            (roster_df["injury_status"].isin(["DTD", "OUT"]))
+            (roster_df["name"].isin(lineup_names))
+            & (roster_df["injury_status"].isin(["DTD", "OUT"]))
         ]
         if len(dtd_in_lineup) > 0:
             print("  *** INJURY WARNINGS ***")
             for _, row in dtd_in_lineup.iterrows():
-                print(f"  ⚠ {row['name']} is {row['injury_status']}: {row['injury_detail'][:50]}")
+                print(
+                    f"  ⚠ {row['name']} is {row['injury_status']}: {row['injury_detail'][:50]}"
+                )
             print()
 
     display_start_sit(result)

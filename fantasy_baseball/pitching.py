@@ -7,7 +7,6 @@ SP start planning, 2-start pitcher identification, and streaming analysis.
 import pandas as pd
 
 
-
 def classify_pitchers(roster_df: pd.DataFrame) -> dict:
     pitchers = roster_df[roster_df["player_type"] == "pitcher"].copy()
     sps = pitchers[pitchers["positions"].str.contains("SP", na=False)].copy()
@@ -30,11 +29,17 @@ def analyze_sp_value(sps: pd.DataFrame) -> pd.DataFrame:
 
     # Fallback: estimate from IP
     ip = pd.to_numeric(df["IP"], errors="coerce").fillna(0)
-    df.loc[df["est_starts"] < 1, "est_starts"] = (ip[df["est_starts"] < 1] / 6).clip(lower=1)
+    df.loc[df["est_starts"] < 1, "est_starts"] = (ip[df["est_starts"] < 1] / 6).clip(
+        lower=1
+    )
     df["est_starts"] = df["est_starts"].clip(lower=1)  # safety
 
-    df["K_per_start"] = pd.to_numeric(df["K"], errors="coerce").fillna(0) / df["est_starts"]
-    df["W_per_start"] = pd.to_numeric(df["W"], errors="coerce").fillna(0) / df["est_starts"]
+    df["K_per_start"] = (
+        pd.to_numeric(df["K"], errors="coerce").fillna(0) / df["est_starts"]
+    )
+    df["W_per_start"] = (
+        pd.to_numeric(df["W"], errors="coerce").fillna(0) / df["est_starts"]
+    )
     df["IP_per_start"] = ip / df["est_starts"]
 
     era = pd.to_numeric(df["ERA"], errors="coerce").fillna(5)
@@ -43,14 +48,14 @@ def analyze_sp_value(sps: pd.DataFrame) -> pd.DataFrame:
     df["era_risk"] = pd.cut(
         era,
         bins=[0, 3.00, 3.50, 4.00, 4.50, 99],
-        labels=["Elite", "Good", "Average", "Risky", "Sit"]
+        labels=["Elite", "Good", "Average", "Risky", "Sit"],
     )
 
     df["start_value"] = (
-        df["K_per_start"] * 0.4 +
-        df["W_per_start"] * 2.0 +
-        (4.50 - era) * 0.3 +
-        (1.35 - whip) * 1.0
+        df["K_per_start"] * 0.4
+        + df["W_per_start"] * 2.0
+        + (4.50 - era) * 0.3
+        + (1.35 - whip) * 1.0
     )
 
     return df
@@ -62,8 +67,8 @@ def find_streaming_candidates(
     n: int = 10,
 ) -> pd.DataFrame:
     fa = all_pitchers[
-        (~all_pitchers["name"].isin(roster_names)) &
-        (all_pitchers["positions"].str.contains("SP", na=False))
+        (~all_pitchers["name"].isin(roster_names))
+        & (all_pitchers["positions"].str.contains("SP", na=False))
     ].copy()
 
     # Only consider pitchers with meaningful IP
@@ -90,9 +95,13 @@ def display_pitching_plan(roster_df: pd.DataFrame, all_pitchers: pd.DataFrame = 
     print("  " + "-" * 70)
     if len(sps) > 0:
         sp_analysis = analyze_sp_value(sps)
-        print(f"  {'Name':<25} {'K/GS':>5} {'W/GS':>5} {'ERA':>5} {'WHIP':>6} {'Risk':<8} {'Value':>6}")
+        print(
+            f"  {'Name':<25} {'K/GS':>5} {'W/GS':>5} {'ERA':>5} {'WHIP':>6} {'Risk':<8} {'Value':>6}"
+        )
         print("  " + "-" * 70)
-        for _, row in sp_analysis.sort_values("start_value", ascending=False).iterrows():
+        for _, row in sp_analysis.sort_values(
+            "start_value", ascending=False
+        ).iterrows():
             print(
                 f"  {row['name']:<25} "
                 f"{row['K_per_start']:>5.1f} "
@@ -127,7 +136,9 @@ def display_pitching_plan(roster_df: pd.DataFrame, all_pitchers: pd.DataFrame = 
         roster_names = roster_df["name"].tolist()
         streamers = find_streaming_candidates(all_pitchers, roster_names, n=10)
         if len(streamers) > 0:
-            print(f"  {'Name':<25} {'K/GS':>5} {'W/GS':>5} {'ERA':>5} {'WHIP':>6} {'Value':>6}")
+            print(
+                f"  {'Name':<25} {'K/GS':>5} {'W/GS':>5} {'ERA':>5} {'WHIP':>6} {'Value':>6}"
+            )
             print("  " + "-" * 70)
             for _, row in streamers.iterrows():
                 print(
