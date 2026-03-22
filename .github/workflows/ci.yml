@@ -1,57 +1,54 @@
 name: Daily Python Script
- 
+
 on:
   schedule:
     - cron: '0 13 * * *'  # 7:00 AM Central (UTC-6 standard / UTC-5 daylight)
   push:
   workflow_dispatch:       # Allow manual runs from GitHub UI
- 
+
 jobs:
   lint:
     runs-on: ubuntu-latest
-    container:
-      image: python:3.12-slim
     if: github.event_name == 'push'
- 
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
- 
-      - name: Install linting tools
-        run: pip install ruff pyright
- 
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
       - name: Run ruff
-        run: ruff check .
- 
+        run: uvx ruff check .
+
       - name: Run pyright
-        run: pyright .
- 
+        run: uvx pyright .
+
   daily-projections:
     runs-on: ubuntu-latest
-    container:
-      image: python:3.12-slim
     if: github.event_name == 'schedule' || github.event_name == 'push'
- 
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
- 
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
       - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
- 
+        run: uv sync
+
       - name: Fetch injuries
-        run: python fetch_injuries.py --source mlb
- 
+        run: uv run python fetch_injuries.py --source mlb
+
       - name: Run projections
         run: |
-          python manage.py \
+          uv run python manage.py \
             --roster-file inputs/my_roster.txt \
             --hitters inputs/hitters.csv \
             --pitchers inputs/pitchers.csv \
             --injuries outputs/injuries.json
- 
+
       - name: Upload outputs
         uses: actions/upload-artifact@v4
         with:
