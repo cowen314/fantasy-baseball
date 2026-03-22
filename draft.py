@@ -21,8 +21,8 @@ import os
 
 import pandas as pd
 
-import config
-from valuations import (
+import fantasy_baseball.config as config
+from fantasy_baseball.valuations import (
     load_hitters,
     load_pitchers,
     filter_draftable,

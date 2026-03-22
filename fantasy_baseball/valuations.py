@@ -13,8 +13,8 @@ Approach:
 
 import pandas as pd
 import numpy as np
-import config
-from positions import get_position, get_primary_position
+import fantasy_baseball.config as config
+from fantasy_baseball.positions import get_position, get_primary_position
 
 
 def load_hitters(filepath: str) -> pd.DataFrame:

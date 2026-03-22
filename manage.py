@@ -23,7 +23,6 @@ import os
 import io
 from contextlib import redirect_stdout
 
-
 from fantasy_baseball.roster import (
     load_valued_projections,
     parse_roster_text,
@@ -45,7 +44,6 @@ from fantasy_baseball.injuries import (
     build_injury_map,
     match_injuries_to_roster,
     display_roster_injuries,
-    generate_fetch_script,
 )
 
 
@@ -71,7 +69,7 @@ def print_header():
     print()
     print("=" * 65)
     print("  FANTASY BASEBALL LINEUP MANAGER")
-    print("  12-Team H2H Categories | Daily Lineups | ESPN")
+    print(f"  12-Team H2H Categories | Daily Lineups | ESPN")
     print("=" * 65)
     print()
 
@@ -95,17 +93,8 @@ def main():
     parser.add_argument("--opp-stats", help="Opponent weekly stats")
     parser.add_argument("--save", action="store_true")
     parser.add_argument("--output", default="output")
-    parser.add_argument(
-        "--generate-fetcher",
-        action="store_true",
-        help="Generate fetch_injuries.py script for local use",
-    )
 
     args = parser.parse_args()
-
-    if args.generate_fetcher:
-        generate_fetch_script()
-        return
 
     print_header()
 
