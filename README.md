@@ -23,7 +23,7 @@ Go to [FanGraphs Projections](https://www.fangraphs.com/projections), select Ste
 ### 2. Generate Your Draft Cheat Sheet
 
 ```bash
-python draft.py --hitters inputs/hitters.csv --pitchers inputs/pitchers.csv
+uv run draft.py --hitters inputs/hitters.csv --pitchers inputs/pitchers.csv
 ```
 
 This outputs auction dollar values, tiered rankings, and positional breakdowns into the `output/` directory.
@@ -31,7 +31,7 @@ This outputs auction dollar values, tiered rankings, and positional breakdowns i
 ### 3. Manage Your Team During the Season
 
 ```bash
-python manage.py --roster-file inputs/my_roster.txt \
+uv run manage.py --roster-file inputs/my_roster.txt \
     --hitters inputs/hitters.csv --pitchers inputs/pitchers.csv \
     --injuries inputs/injuries.json
 ```
@@ -65,7 +65,7 @@ Position eligibility is mapped via MLBAMID lookup (333/333 draftable hitters cov
 ### CLI Options
 
 ```bash
-python draft.py --hitters inputs/hitters.csv --pitchers inputs/pitchers.csv \
+uv run draft.py --hitters inputs/hitters.csv --pitchers inputs/pitchers.csv \
     --min-pa 150              # Lower PA threshold (default 200)
     --min-ip 20               # Lower IP threshold (default 30)
     --hitter-budget-pct 0.70  # Adjust budget split (default 0.67)
@@ -94,14 +94,14 @@ Daily lineup optimization, weekly matchup tracking, pitching planning, and injur
 
 **Start of week (no matchup data yet):**
 ```bash
-python manage.py --roster-file inputs/my_roster.txt \
+uv run manage.py --roster-file inputs/my_roster.txt \
     --hitters inputs/hitters.csv --pitchers inputs/pitchers.csv \
     --injuries inputs/injuries.json
 ```
 
 **Mid-week (with current matchup stats):**
 ```bash
-python manage.py --roster-file inputs/my_roster.txt \
+uv run manage.py --roster-file inputs/my_roster.txt \
     --hitters inputs/hitters.csv --pitchers inputs/pitchers.csv \
     --injuries inputs/injuries.json \
     --my-stats "R=25,HR=8,RBI=22,SB=4,OBP=.285,K=48,W=3,SV=2,ERA=3.15,WHIP=1.12" \
@@ -164,9 +164,9 @@ A pre-seeded snapshot with ~27 injuries (current as of mid-March 2026) is includ
 ### Refreshing Injury Data
 
 ```bash
-python fetch_injuries.py --source mlb    # MLB Stats API
-python fetch_injuries.py --source espn   # ESPN (requires beautifulsoup4)
-python fetch_injuries.py --source both   # Merged from both
+uv run fetch_injuries.py --source mlb    # MLB Stats API
+uv run fetch_injuries.py --source espn   # ESPN (requires beautifulsoup4)
+uv run fetch_injuries.py --source both   # Merged from both
 ```
 
 ---
