@@ -9,15 +9,10 @@ Usage:
 """
 
 import json
-import sys
 import argparse
 from datetime import datetime, timedelta
 
-try:
-    import requests
-except ImportError:
-    print("Please install requests: pip install requests")
-    sys.exit(1)
+import requests
 
 
 def fetch_mlb_injuries():

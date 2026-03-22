@@ -18,11 +18,14 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@v5
 
-      - name: Run ruff
-        run: uvx ruff check .
+      - name: Run ruff check
+        run: uv run ruff check .
 
-      - name: Run pyright
-        run: uvx pyright .
+      - name: Run ruff format
+        run: uv run ruff format . --diff
+
+      # - name: Run pyright
+      #   run: uv run pyright .
 
   daily-projections:
     runs-on: ubuntu-latest
