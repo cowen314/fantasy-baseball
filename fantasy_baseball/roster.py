@@ -9,7 +9,7 @@ import pandas as pd
 import os
 import re
 import unicodedata
-from difflib import get_close_matches
+from difflib import SequenceMatcher
 from typing import Optional
 
 from fantasy_baseball.valuations import (
@@ -49,48 +49,69 @@ def load_valued_projections(hitters_path: str, pitchers_path: str) -> tuple:
     return h_draft, p_draft
 
 
-def strip_accents(s: str) -> str:
-    """Remove accent marks for comparison."""
+def _strip_accents(s: str) -> str:
     return "".join(
         c for c in unicodedata.normalize("NFD", s) if unicodedata.category(c) != "Mn"
     )
 
 
-def fuzzy_match_player(
-    name: str, all_names: list, cutoff: float = 0.6
-) -> Optional[str]:
-    """Fuzzy match a player name against a name list."""
-    name_clean = strip_accents(name.strip().lower())
+def _name_similarity(a: str, b: str) -> float:
+    """Score 0-1 for how similar two names are (accent-insensitive)."""
+    return SequenceMatcher(
+        None, _strip_accents(a.lower()), _strip_accents(b.lower())
+    ).ratio()
 
-    # Exact match (accent-insensitive)
-    for n in all_names:
-        if strip_accents(n).lower() == name_clean:
-            return n
 
-    # Contains match (accent-insensitive)
-    for n in all_names:
-        n_clean = strip_accents(n).lower()
-        if name_clean in n_clean or n_clean in name_clean:
-            return n
+def _last_name_matches(input_name: str, candidate: str) -> bool:
+    """Check if the last name token is the same (accent-insensitive)."""
+    a_parts = _strip_accents(input_name.lower()).split()
+    b_parts = _strip_accents(candidate.lower()).split()
+    if not a_parts or not b_parts:
+        return False
+    return a_parts[-1] == b_parts[-1]
 
-    # Last name + first initial
-    parts = name_clean.split()
-    if len(parts) >= 2:
-        last = parts[-1]
-        first_init = parts[0][0]
-        for n in all_names:
-            n_clean = strip_accents(n).lower()
-            n_parts = n_clean.split()
-            if n_parts and n_parts[-1] == last and n_clean[0] == first_init:
-                return n
 
-    # Fuzzy
-    matches = get_close_matches(name, all_names, n=1, cutoff=cutoff)
-    return matches[0] if matches else None
+def best_match(
+    name: str, candidates: list[str], min_score: float = 0.6
+) -> tuple[Optional[str], float]:
+    """
+    Find the best matching name from a list.
+    Returns (matched_name, similarity_score) or (None, 0).
+
+    Prioritizes:
+      1. Exact match (accent-insensitive)
+      2. Same last name + high similarity
+      3. General fuzzy match above threshold
+    """
+    name_clean = _strip_accents(name.strip().lower())
+
+    best_name = None
+    best_score = 0.0
+
+    for c in candidates:
+        c_clean = _strip_accents(c.strip().lower())
+
+        # Exact match
+        if c_clean == name_clean:
+            return c, 1.0
+
+        score = _name_similarity(name, c)
+
+        # Bonus for matching last name (strong signal)
+        if _last_name_matches(name, c):
+            score += 0.15
+
+        if score > best_score:
+            best_score = score
+            best_name = c
+
+    if best_score >= min_score:
+        return best_name, best_score
+    return None, 0.0
 
 
 def parse_roster_text(text: str) -> list:
-    """Parse a pasted roster into player names."""
+    """Parse pasted roster text into player names."""
     players = []
     lines = text.strip().split("\n")
     if len(lines) == 1 and "," in lines[0]:
@@ -122,8 +143,8 @@ def build_roster(
     """
     Match player names to projection data.
 
-    Handles ambiguity: if a name matches both a hitter and pitcher,
-    picks the one with more playing time (higher PA or IP).
+    Uses similarity scoring to pick the right player when a name
+    fuzzy-matches in both the hitter and pitcher pools.
     """
     all_hitter_names = hitters_df["name"].tolist()
     all_pitcher_names = pitchers_df["name"].tolist()
@@ -132,57 +153,45 @@ def build_roster(
     unmatched = []
 
     for name in player_names:
-        # Match in both pools separately
-        h_match_name = fuzzy_match_player(name, all_hitter_names)
-        p_match_name = fuzzy_match_player(name, all_pitcher_names)
+        h_match, h_score = best_match(name, all_hitter_names)
+        p_match, p_score = best_match(name, all_pitcher_names)
 
-        h_row = None
-        p_row = None
+        h_row = hitters_df[hitters_df["name"] == h_match].iloc[0] if h_match else None
+        p_row = pitchers_df[pitchers_df["name"] == p_match].iloc[0] if p_match else None
 
-        if h_match_name:
-            h_hits = hitters_df[hitters_df["name"] == h_match_name]
-            if len(h_hits) > 0:
-                h_row = h_hits.iloc[0]
+        chosen = None
 
-        if p_match_name:
-            p_hits = pitchers_df[pitchers_df["name"] == p_match_name]
-            if len(p_hits) > 0:
-                p_row = p_hits.iloc[0]
-
-        # Decide: hitter or pitcher?
         if h_row is not None and p_row is not None:
-            # Both matched — pick the "real" player (more playing time)
-            h_pa = pd.to_numeric(h_row.get("PA", 0), errors="coerce") or 0
-            p_ip = pd.to_numeric(p_row.get("IP", 0), errors="coerce") or 0
-
-            # Heuristic: a hitter with 200+ PA is more likely the intended match
-            # than a pitcher with 200+ IP if both exist.
-            # But a hitter with 1 PA is clearly not the intended match vs a pitcher with 66 IP.
-            h_score = h_pa
-            p_score = p_ip * 3  # weight IP higher since fewer raw innings than PA
-
-            if h_score >= p_score:
-                row = h_row.to_dict()
-                row["matched_name"] = h_match_name
-                row["input_name"] = name
-                row["player_type"] = "hitter"
+            # If one is an exact match, prefer it outright
+            if h_score == 1.0 and p_score < 1.0:
+                chosen = (h_row, h_match, "hitter")
+            elif p_score == 1.0 and h_score < 1.0:
+                chosen = (p_row, p_match, "pitcher")
+            elif abs(h_score - p_score) > 0.05:
+                # Clear winner by name similarity
+                if h_score > p_score:
+                    chosen = (h_row, h_match, "hitter")
+                else:
+                    chosen = (p_row, p_match, "pitcher")
             else:
-                row = p_row.to_dict()
-                row["matched_name"] = p_match_name
-                row["input_name"] = name
-                row["player_type"] = "pitcher"
-            roster.append(row)
+                # Tie-break by playing time
+                h_pa = pd.to_numeric(h_row.get("PA", 0), errors="coerce") or 0
+                p_ip = pd.to_numeric(p_row.get("IP", 0), errors="coerce") or 0
+                if h_pa >= p_ip * 3:
+                    chosen = (h_row, h_match, "hitter")
+                else:
+                    chosen = (p_row, p_match, "pitcher")
         elif h_row is not None:
-            row = h_row.to_dict()
-            row["matched_name"] = h_match_name
-            row["input_name"] = name
-            row["player_type"] = "hitter"
-            roster.append(row)
+            chosen = (h_row, h_match, "hitter")
         elif p_row is not None:
-            row = p_row.to_dict()
-            row["matched_name"] = p_match_name
+            chosen = (p_row, p_match, "pitcher")
+
+        if chosen:
+            row_data, matched_name, ptype = chosen
+            row = row_data.to_dict()
+            row["matched_name"] = matched_name
             row["input_name"] = name
-            row["player_type"] = "pitcher"
+            row["player_type"] = ptype
             roster.append(row)
         else:
             unmatched.append(name)
@@ -208,7 +217,6 @@ def load_saved_roster(path: str = "data/my_roster.csv") -> pd.DataFrame:
 
 
 def display_roster(roster_df: pd.DataFrame):
-    """Pretty-print the roster."""
     hitters = roster_df[roster_df["player_type"] == "hitter"].copy()
     pitchers = roster_df[roster_df["player_type"] == "pitcher"].copy()
 
@@ -248,5 +256,4 @@ def display_roster(roster_df: pd.DataFrame):
 
     print()
     if "dollar_value" in roster_df.columns:
-        total_value = roster_df["dollar_value"].sum()
-        print(f"  Total roster value: ${total_value:.0f}")
+        print(f"  Total roster value: ${roster_df['dollar_value'].sum():.0f}")
