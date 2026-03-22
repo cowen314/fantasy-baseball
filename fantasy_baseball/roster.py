@@ -12,11 +12,19 @@ import unicodedata
 from difflib import get_close_matches
 from typing import Optional
 
+from fantasy_baseball.valuations import (
+    load_hitters,
+    load_pitchers,
+    filter_draftable,
+    compute_hitter_zscores,
+    compute_pitcher_zscores,
+    zscores_to_dollars,
+    assign_tiers,
+)
+
 
 def load_projections(hitters_path: str, pitchers_path: str) -> tuple:
     """Load projection data from Module 1."""
-    from valuations import load_hitters, load_pitchers
-
     h = load_hitters(hitters_path)
     p = load_pitchers(pitchers_path)
     return h, p
@@ -24,15 +32,6 @@ def load_projections(hitters_path: str, pitchers_path: str) -> tuple:
 
 def load_valued_projections(hitters_path: str, pitchers_path: str) -> tuple:
     """Load projections AND run them through the valuation engine."""
-    from valuations import (
-        load_hitters,
-        load_pitchers,
-        filter_draftable,
-        compute_hitter_zscores,
-        compute_pitcher_zscores,
-        zscores_to_dollars,
-        assign_tiers,
-    )
 
     h = load_hitters(hitters_path)
     p = load_pitchers(pitchers_path)
