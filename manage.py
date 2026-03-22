@@ -19,12 +19,10 @@ Usage:
 """
 
 import argparse
-import sys
 import os
 import io
 from contextlib import redirect_stdout
 
-import pandas as pd
 
 from fantasy_baseball.roster import (
     load_valued_projections, parse_roster_text, build_roster,
@@ -63,7 +61,7 @@ def print_header():
     print()
     print("=" * 65)
     print("  FANTASY BASEBALL LINEUP MANAGER")
-    print(f"  12-Team H2H Categories | Daily Lineups | ESPN")
+    print("  12-Team H2H Categories | Daily Lineups | ESPN")
     print("=" * 65)
     print()
 

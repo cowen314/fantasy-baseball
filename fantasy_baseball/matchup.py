@@ -4,11 +4,7 @@ Weekly Matchup Tracker
 Track H2H category matchup for the week and generate strategy adjustments.
 """
 
-import pandas as pd
-import numpy as np
-from typing import Optional
 
-import config
 
 
 def create_empty_matchup() -> dict:

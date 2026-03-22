@@ -13,10 +13,6 @@ Integrates with lineup optimizer to flag injured/IL players.
 
 import pandas as pd
 import json
-import os
-import re
-from datetime import datetime, timedelta
-from typing import Optional
 
 
 # === Status classifications for fantasy purposes ===

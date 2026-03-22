@@ -5,10 +5,7 @@ SP start planning, 2-start pitcher identification, and streaming analysis.
 """
 
 import pandas as pd
-import numpy as np
-from typing import Optional
 
-import config
 
 
 def classify_pitchers(roster_df: pd.DataFrame) -> dict:
@@ -108,7 +105,7 @@ def display_pitching_plan(roster_df: pd.DataFrame, all_pitchers: pd.DataFrame = 
     else:
         print("  No SPs on roster.")
 
-    print(f"\n  YOUR RELIEF PITCHERS")
+    print("\n  YOUR RELIEF PITCHERS")
     print("  " + "-" * 70)
     if len(rps) > 0:
         print(f"  {'Name':<25} {'SV':>4} {'K':>5} {'ERA':>5} {'WHIP':>6}")
@@ -125,7 +122,7 @@ def display_pitching_plan(roster_df: pd.DataFrame, all_pitchers: pd.DataFrame = 
         print("  No RPs on roster.")
 
     if all_pitchers is not None:
-        print(f"\n  TOP STREAMING CANDIDATES (Free Agents)")
+        print("\n  TOP STREAMING CANDIDATES (Free Agents)")
         print("  " + "-" * 70)
         roster_names = roster_df["name"].tolist()
         streamers = find_streaming_candidates(all_pitchers, roster_names, n=10)

@@ -5,7 +5,6 @@ Daily start/sit recommendations for H2H Categories leagues.
 """
 
 import pandas as pd
-import numpy as np
 from typing import Optional
 
 import fantasy_baseball.config as config

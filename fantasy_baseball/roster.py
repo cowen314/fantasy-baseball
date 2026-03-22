@@ -6,15 +6,12 @@ Matches player names against projection data to pull stats and positions.
 """
 
 import pandas as pd
-import json
 import os
 import re
 import unicodedata
 from difflib import get_close_matches
 from typing import Optional
 
-import config
-from positions import get_position
 
 
 def load_projections(hitters_path: str, pitchers_path: str) -> tuple:
@@ -30,7 +27,7 @@ def load_valued_projections(hitters_path: str, pitchers_path: str) -> tuple:
     from valuations import (
         load_hitters, load_pitchers, filter_draftable,
         compute_hitter_zscores, compute_pitcher_zscores,
-        zscores_to_dollars, assign_tiers, compute_category_strengths,
+        zscores_to_dollars, assign_tiers,
     )
     h = load_hitters(hitters_path)
     p = load_pitchers(pitchers_path)

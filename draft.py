@@ -18,10 +18,8 @@ Output:
 import argparse
 import sys
 import os
-from pathlib import Path
 
 import pandas as pd
-import numpy as np
 
 import config
 from valuations import (
@@ -182,8 +180,8 @@ def generate_summary(cheatsheet: pd.DataFrame, hitters: pd.DataFrame, pitchers: 
     lines.append("BUDGET STRATEGY:")
     lines.append(f"  Hitter budget: ${config.AUCTION_BUDGET * config.HITTER_BUDGET_PCT:.0f}")
     lines.append(f"  Pitcher budget: ${config.AUCTION_BUDGET * config.PITCHER_BUDGET_PCT:.0f}")
-    lines.append(f"  Target 2-3 elite hitters ($30+), fill with $10-20 mid-tier")
-    lines.append(f"  Target 1-2 ace SP ($25+), grab saves late if possible")
+    lines.append("  Target 2-3 elite hitters ($30+), fill with $10-20 mid-tier")
+    lines.append("  Target 1-2 ace SP ($25+), grab saves late if possible")
 
     return "\n".join(lines)
 

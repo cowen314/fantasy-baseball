@@ -13,9 +13,8 @@ Approach:
 
 import pandas as pd
 import numpy as np
-from typing import Optional
 import config
-from positions import POSITION_MAP, get_position, get_primary_position, get_all_eligible_slots
+from positions import get_position, get_primary_position
 
 
 def load_hitters(filepath: str) -> pd.DataFrame:
